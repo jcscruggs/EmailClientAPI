@@ -25,14 +25,14 @@ namespace EmailClientAPI.Controllers
         {
             try
             {
-                if(email == null)
+                if(email == null) // check for no request body
                 {
                     return BadRequest("Email structure was expected in request body");
                 }
                 bool connected = _emailClient.connect();
-                if (connected)
+                if (connected)// only attempt email if smtp connection was made
                 {
-                    bool emailSent = await _emailClient.sendAsync(email.from, email.to, email.subject, email.body);
+                    bool emailSent = await _emailClient.sendAsync(email.from, email.to, email.subject, email.htmlbody);
                     _emailClient.disconnect();
 
                     if (emailSent)
