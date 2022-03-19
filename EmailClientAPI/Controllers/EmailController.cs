@@ -13,24 +13,29 @@ namespace EmailClientAPI.Controllers
     [ApiController]
     public class EmailController : ControllerBase
     {
-
         private readonly ILogger<EmailController> _logger;
         private readonly IEmailClient _emailClient;
         public EmailController(IEmailClient emailClient, ILogger<EmailController> logger)
         {
             _logger = logger;
-            _emailClient = emailClient;
-            
+            _emailClient = emailClient;           
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> GetAsync()
         {
             _emailClient.connect();
-            _logger.LogInformation("entered get method");
-            return Ok("Completed");
+            bool emailSent = await _emailClient.sendAsync("jaredscruggs@outlook.com", "jdoggyx14@hotmail.com", "testing", "<p>test</p>");
+            _emailClient.disconnect();
+
+            if (emailSent)
+            {
+                return Ok("Email successfully sent");
+            }
+            else
+            {
+                return BadRequest("Email was unsuccessful");
+            } 
         }
-
-
     }
 }
