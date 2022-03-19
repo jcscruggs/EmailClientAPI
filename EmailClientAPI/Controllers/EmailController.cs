@@ -2,9 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using EmailClientAPI.Models;
 using EmailLibrary;
 
 namespace EmailClientAPI.Controllers
@@ -21,21 +20,41 @@ namespace EmailClientAPI.Controllers
             _emailClient = emailClient;           
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAsync()
+        [HttpPost]
+        public async Task<IActionResult> SendEmailAsync([FromBody] Email email)
         {
-            _emailClient.connect();
-            bool emailSent = await _emailClient.sendAsync("jaredscruggs@outlook.com", "jdoggyx14@hotmail.com", "testing", "<p>test</p>");
-            _emailClient.disconnect();
+            try
+            {
+                if(email == null)
+                {
+                    return BadRequest("Email structure was expected in request body");
+                }
+                bool connected = _emailClient.connect();
+                if (connected)
+                {
+                    bool emailSent = await _emailClient.sendAsync(email.from, email.to, email.subject, email.body);
+                    _emailClient.disconnect();
 
-            if (emailSent)
+                    if (emailSent)
+                    {
+                        return Ok("Email successfully sent");
+                    }
+                    else
+                    {
+                        return StatusCode(StatusCodes.Status500InternalServerError,
+                        "Email failed to send");
+                    }
+                }
+                else
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError,
+                        "Unable to connect to SMTP server");
+                }
+            }catch(Exception e)
             {
-                return Ok("Email successfully sent");
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                        "Error occured while attempting to send email");
             }
-            else
-            {
-                return BadRequest("Email was unsuccessful");
-            } 
         }
     }
 }
